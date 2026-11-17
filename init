@@ -1,0 +1,33 @@
+#!/bin/sh
+/bin/busybox --install -s /bin
+mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+mount -t devtmpfs devtmpfs /dev
+loadall() {
+    for a in $(cat /sys/bus/*/devices/*/modalias 2>/dev/null | sort -u); do
+        modprobe $a 2>/dev/null
+    done
+}
+loadall
+for m in loop squashfs overlay isofs sr_mod cdrom sd_mod usb-storage; do
+    modprobe $m 2>/dev/null
+done
+loadall
+mkdir -p /cd /sfs /rw /newroot
+for i in $(seq 20); do
+    for d in /dev/sr* /dev/sd* /dev/vd*; do
+        mount -o ro $d /cd 2>/dev/null || continue
+        [ -f /cd/anchorage.sfs ] && break 2
+        umount /cd
+    done
+    sleep 1
+done
+mount -t squashfs -o loop,ro /cd/anchorage.sfs /sfs
+mount -t tmpfs tmpfs /rw
+mkdir -p /rw/up /rw/work
+mount -t overlay overlay -o lowerdir=/sfs,upperdir=/rw/up,workdir=/rw/work /newroot
+mountpoint -q /newroot || exec /bin/sh
+mount --move /cd /newroot/media/cdrom
+umount /proc /sys
+mount --move /dev /newroot/dev
+exec switch_root /newroot /sbin/init

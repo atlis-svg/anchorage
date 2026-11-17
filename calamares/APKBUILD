@@ -1,0 +1,36 @@
+pkgname=calamares
+pkgver=3.4.2
+pkgrel=0
+pkgdesc="Distribution-independent installer framework"
+url="https://calamares.codeberg.page/"
+arch="x86_64"
+license="GPL-3.0-or-later AND LGPL-2.1-only"
+makedepends="
+cmake samurai extra-cmake-modules
+qt6-qtbase-dev qt6-qtsvg-dev qt6-qttools-dev
+qt6-qtdeclarative-dev kcoreaddons-dev kcrash-dev
+kpmcore-dev polkit-qt-dev yaml-cpp-dev python3-dev
+kconfig-dev ki18n-dev kwidgetsaddons-dev
+"
+source="https://codeberg.org/Calamares/calamares/releases/download/v$pkgver/calamares-$pkgver.tar.gz"
+options="!check"
+
+build() {
+cmake -B build -G Ninja \
+-DCMAKE_BUILD_TYPE=None \
+-DCMAKE_INSTALL_PREFIX=/usr \
+-DCMAKE_INSTALL_LIBDIR=lib \
+-DWITH_QT6=ON \
+-DBUILD_TESTING=OFF \
+-DBUILD_SCHEMA_TESTING=OFF \
+-DINSTALL_CONFIG=ON
+cmake --build build
+}
+
+package() {
+DESTDIR="$pkgdir" cmake --install build
+}
+sha512sums="
+efe8428d2b69d0f5019e6cb15079e1c4eedbeb73f642af9f0a3303f53196a7aabdfc877b23baba42790830fd0ecdd1e5b9a20839e9a4336f796781288126010d  calamares-3.4.2.tar.gz
+"
+subpackages="$pkgname-doc"
